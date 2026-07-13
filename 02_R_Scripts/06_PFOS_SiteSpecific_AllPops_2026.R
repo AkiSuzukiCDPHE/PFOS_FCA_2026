@@ -1,11 +1,13 @@
-# R SCRIPT FOR MERCURY SITE-SPECIFIC UPDATES TO COMBINE ALL POPULATIONS AND EXPORT ADVISORIES
+# R SCRIPT FOR PFOS SITE-SPECIFIC UPDATES TO COMBINE ALL POPULATIONS AND EXPORT ADVISORIES
 
 # This R Script will combine the GP, WCBA, and Child site-specific data into one dataframe
 # and rename, reorder, and delete extraneous variables.
 
-# Merge the data  and transform to long####
+# Merge the data  and transform to long ####
 
 library(dplyr)
+library (readxl)
+
 # merge all three pops
 FCAs_2026 <-  Advisories_GP |> left_join(
   Advisories_WCBA,
@@ -34,7 +36,6 @@ FCAs_2026 <-  Advisories_GP |> left_join(
 
 
 library(tidyr)
-library(dplyr)
 
 # Pivot longer
 FCAs_2026_Long <- FCAs_2026 %>%
@@ -53,36 +54,50 @@ FCAs_2026_Long <- FCAs_2026 %>%
 
 # Final cleaning steps for final site-specific output ####
 
-# 
+#
 # # Filter out species that do not meet sample size requirements and have not been selected for manual review.
 # # This sample size will change if the power analysis is rerun and produces a different result.
+# For PFOS you may choose to skip this since there is no censored data step and you can manually review in the internal TAC
 # FCAs_2026_Long_1 <- FCAs_2026_Long %>%
 #   filter(!(Num_Obs<11))
 
 
 # Subset to df with all new, updated, or potentially lifted advisories
-FCAs_2026_Long_1 <- FCAs_2026_Long |>  filter(Rec %in% c(
-  "Same as Statewide - Consider removing SS advisory with TAC",
-  "Adopt SS advisory (More stringent than statewide)",
-  "Adopt updated (Less Stringent than existing SS)",
-  "Issue a new site-specific FCA",
-  "Consider removing SS advisory with TAC",
-  "Review manually"
-))
+# Add new categories if you create them
+FCAs_2026_Long_1 <- FCAs_2026_Long |>  filter(
+  Rec %in% c(
+    "Same as Statewide - Consider removing SS advisory with TAC",
+    "Adopt SS advisory (More stringent than statewide)",
+    "Adopt updated SS (More Stringent than existing SS)",
+    "Adopt updated (Less Stringent than existing SS)",
+    "Issue a new site-specific FCA",
+    "Consider removing SS advisory with TAC",
+    "Review manually"
+  )
+)
 
 
 # Upload the CPW Regional Waterbodies
 CPWRegions <- read_excel("01_Raw_Data/Lakes_with_CPWAreaRegion_County.xlsx")
 
 # Merge the regional waterbodies with the advisories
-PFOS_SS_FCAs_Final_CPW_Regions <- merge(FCAs_2026_Long_1, CPWRegions[, c("Waterbody","REGION")], by = "Waterbody", all.x = TRUE)
+PFOS_SS_FCAs_Final_CPW_Regions <- merge(FCAs_2026_Long_1,
+                                        CPWRegions[, c("Waterbody", "REGION")],
+                                        by = "Waterbody",
+                                        all.x = TRUE)
 
 # Make sure all rows are distinct
 PFOS_SS_FCAs_Final_CPW_Regions1 <- PFOS_SS_FCAs_Final_CPW_Regions %>%
   distinct(Waterbody, Species, Average_Result, Population, .keep_all = TRUE) |> rename (CPW_Region = REGION)
 
-# Rename columns to make them more legible and reorder variables
-PFOS_SS_FCAs_Final_CPW_Regions2 <-PFOS_SS_FCAs_Final_CPW_Regions1 %>% rename(
+# Rename columns to make them more legible, reorder variables, and rename the values under population to match the values in the dashboard
+PFOS_SS_FCAs_Final_CPW_Regions2 <- PFOS_SS_FCAs_Final_CPW_Regions1 |> mutate(
+  Population = case_when(
+    Population == "GP" ~ "General population",
+    Population == "WCBA" ~ "Pregnant women",
+    Population == "Children" ~ "Children (ages 6 and younger)"
+  )
+) |> rename(
   c(
     `Sample N` = Num_Obs,
     `Proposed (meals per month)` = MealsPerMonth,
@@ -90,14 +105,14 @@ PFOS_SS_FCAs_Final_CPW_Regions2 <-PFOS_SS_FCAs_Final_CPW_Regions1 %>% rename(
     `Existing site-specific status` = SS_Status,
     `Statewide (meals per month)` = Statewide_Per_Month,
     `Statewide status` = State_Status,
-    Recommendation = Rec))  |>  mutate(Size= "Any") |> relocate(Size, .after=Commonly_Consumed)
+    Recommendation = Rec
+  )
+)  |>  mutate(Size = "any") |> relocate(Size, .after = Commonly_Consumed)
 
 
 # Exporting the final CENSORED dataframe
 # Change file paths
 
 
-library("writexl")
-write_xlsx(PFOS_SS_FCAs_Final_CPW_Regions2,"04_Output/2026_PFOS_SS_Final_FCAs.xlsx")
-
-
+# library("writexl")
+# write_xlsx(PFOS_SS_FCAs_Final_CPW_Regions2,"04_Output/2026_PFOS_SS_Final_FCAs.xlsx")
