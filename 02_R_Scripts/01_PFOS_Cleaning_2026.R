@@ -66,7 +66,7 @@ PFOSData_2 <- PFOSData_1 %>%
       Species_Code == "RXC" ~ "Rainbow Trout x Cutthroat",
       Species_Code == "RXN" ~ "Rainbow Trout",
       Species_Code == "SRN" ~ "Cutthroat",
-      Species_Code == "RGN" ~ "Cuttrhoat",
+      Species_Code == "RGN" ~ "Cutthroat",
       Species_Code == "BRK" ~ "Brook Trout",
       Species_Code == "RBT" ~ "Rainbow Trout",
       Species_Code == "KOK" ~ "Kokanee",

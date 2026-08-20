@@ -43,8 +43,9 @@ FCAs_2026_Long <- FCAs_2026 %>%
     # Do not pivot Waterbody through Num_Obs
     cols = !(Waterbody:Num_Obs),
     
-    # Use names_pattern instead of names_sep
-    # This captures the Group first, then the Variable name, regardless of underscores
+    # "Population" matches the first capture group (GP|WCBA|Children) and puts those values
+    # into a new categorical column named Population.
+    # .value" matches the second capture group (.*) and uses those extracted strings to create multiple new value columns.
     names_to = c("Population", ".value"),
     names_pattern = "(GP|WCBA|Children)_(.*)"
   )

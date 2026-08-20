@@ -40,24 +40,26 @@ PFOS_Clean <- PFOS_Only_Clean_Original %>%
 
 PFOS_SS <- PFOS_Clean %>%
   group_by(Waterbody, Species_Code) %>%
-  mutate(Average_Result = mean(Result), Num_Obs = n())
+  mutate(Average_Result = mean(Result), Num_Obs = n()) |> ungroup()  # Removes the hidden grouping metadata
 
 
 # Obtain the unique rows based on the specified columns from the PFOS_SS data frame.
-# The distinct function keeps the distinct rows based on the Waterbody column while preserving all
+# The distinct function keeps the distinct rows based on the Waterbody and species code while preserving all
 # other columns specified in the .keep_all argument.
-# This operation ensures that duplicate rows based on Waterbody are removed while preserving the values of other variables.
+# This operation ensures that duplicate rows based on Waterbody and species code are removed while preserving the values of other variables.
 
-PFOS_SS2 = distinct(PFOS_SS, Waterbody, .keep_all = TRUE) %>%
+
+  PFOS_SS2 = PFOS_SS %>%
+  distinct(Waterbody, Species_Code, .keep_all = TRUE) %>%
   select(
-    "Waterbody",
-    "Species_Code",
-    "Species",
-    "Commonly_Consumed",
-    "Analyte",
-    "Average_Result",
-    "Unit",
-    "Num_Obs"
+    Waterbody,
+    Species_Code,
+    Species,
+    Commonly_Consumed,
+    Analyte,
+    Average_Result,
+    Unit,
+    Num_Obs
   )
 
 # Assign meal frequency recommendations for site-specific advisories

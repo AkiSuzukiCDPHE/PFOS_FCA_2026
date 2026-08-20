@@ -7,7 +7,9 @@ library("tidyverse")
 
 
 # Upload the THE CLEANED PFOS DATASET
-fishclean <- read_csv("C:/Users/oasuzuki/Documents/R/FCAs/Hg_FCA/03_Clean_Data/fishclean.csv")
+PFOS_Clean_Power <- read_excel("03_Clean_Data/PFOS_CleanedMaster_2026.xlsx") %>%
+  filter(Analyte == "PFOS")
+
 
 # POWER ANALYSIS FOR PFOS DATA
 
@@ -16,9 +18,9 @@ fishclean <- read_csv("C:/Users/oasuzuki/Documents/R/FCAs/Hg_FCA/03_Clean_Data/f
 
 # MeanH0 = Screening value/threshold for issuing a site-specific advisory (8 meal per month FCLG)
 # For Hg this is .091 mg/ mercury/kg fish
-# For PFOS this is .91
+# For PFOS this is .91 ng/g
 
-MeanH0 <- .91
+MeanH0 <- 0.91 # FCLG threshold for 8 meals/month (ng/g)
 
 # MeanH1 = Mean fish tissue concentration by Waterbody by species
 
@@ -29,26 +31,18 @@ MeanH0 <- .91
 
 library(dplyr)
 
-mean_by_group <- fishclean %>%
+# Dynamic mean and standard deviation
+mean_by_group <- PFOS_Clean_Power %>%
   group_by(Waterbody, Species) %>%
-  summarise(mean_variable = mean(Result))
+  summarise(mean_variable = mean(Result, na.rm = TRUE), .groups = "drop")
 
-summary(mean_by_group$mean_variable)
-# median of the mean by waterbody by species = 0.10000
-
-MeanH1 <- .1
-
-# Calculating Standard Deviation
-
-std_dev <- fishclean %>%
+std_dev <- PFOS_Clean_Power %>%
   group_by(Waterbody, Species) %>%
-  summarise_at(vars(Result), list(Standard_Dev=sd))
+  summarise(Standard_Dev = sd(Result, na.rm = TRUE), .groups = "drop")
 
-summary(std_dev$Standard_Dev)
-# median of the standard deviation by waterbody by species =.03271
-# could use the geometric mean of standard deviations instead of median. GM is not as influenced by outliers?
+MeanH1 <- median(mean_by_group$mean_variable, na.rm = TRUE)
+Standard_Deviation <- median(std_dev$Standard_Dev, na.rm = TRUE)
 
-Standard_Deviation <-.038
 
 
 
@@ -63,9 +57,10 @@ Effect_Size <-(MeanH1-MeanH0)/Standard_Deviation
 
 # To get the detectable difference at different percentages, multiply the null value by 1.1, 1.2, 1.3 etc. 
 
-X <- c(1.1, 1.2, 1.3, 1.4,  1.5)
+# Detectable differences relative to PFOS threshold (0.91 ng/g)
+X <- c(1.1, 1.2, 1.3, 1.4, 1.5)
+Effect_size_values <- MeanH0 * X
 
-Effect_size_values <- .091 * X
 
 print(Effect_size_values)
 
@@ -148,10 +143,9 @@ Power_analysis
 
 
 # Display the result
-cat("Effect Size:", effect_size, "\n")
-cat("Significance Level (alpha):", alpha, "\n")
-cat("Desired Power:", power, "\n\n")
-cat("Result:\n")
-print(result)
-
+# Match exact variable casing
+cat("Effect Size:", Effect_Size, "\n")
+cat("Significance Level (alpha):", 0.05, "\n")
+cat("Desired Power:", 0.80, "\n\n")
+print(Result)
 

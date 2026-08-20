@@ -216,7 +216,8 @@ ggplot(PFOS_SS_TAC_GP2, aes(x = x_label)) +
   annotate("text", x = 0.5, y = 4.6, label = "2 meals per month",  hjust = 0, size = 3.5) +
   # annotate("text", x = 0.5, y = 3, label = "3 meals per month",  hjust = 0, size = 3.5) +
   # annotate("text", x = 0.5, y = 2, label = "4 meals per month",  hjust = 0, size = 3.5) +
-  annotate("text", x = 0.5, y = .08, label = ">= 8 meals per month",  hjust = 0, size = 3.5) +
+  # Align annotation height with threshold line (1.3 ng/g)
+  annotate("text", x = 0.5, y = 1.4, label = ">= 8 meals per month", hjust = 0, size = 3.5)
   
   
   # 5. Formatting axes and limits
