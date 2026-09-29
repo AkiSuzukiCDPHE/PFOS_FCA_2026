@@ -53,7 +53,7 @@ PFOSData_2 <- PFOSData_1 %>%
       Species_Code == "BBH" ~ "Black Bullhead",
       Species_Code == "CPP" ~ 'Common Carp',
       Species_Code == "CCF" ~ 'Channel Catfish',
-      Species_Code == "MAC" ~ "Lake Trout(Mackinaw)",
+      Species_Code == "MAC" ~ "Lake Trout (Mackinaw)",
       Species_Code == "SAG" ~ 'Saugeye',
       Species_Code == "SAGB" ~ "Saugeye",
       Species_Code == "SPL" ~ "Splake",
@@ -102,8 +102,9 @@ PFOSData_2 <- PFOSData_1 %>%
 table(PFOSData_2$Waterbody)
 
 # Rename waterbodies if needed
-# PFOSData_2 <- PFOSData_1 %>% mutate(Waterbody = case_when(Waterbody == "Jumbo Annex" ~ "Jumbo Lake"),
-#           TRUE ~ Waterbody)
+PFOSData_2 <- PFOSData_1 %>% mutate(Waterbody = case_when(Waterbody == "Jumbo Annex" ~ "Jumbo Lake",
+Waterbody == "Big Creek Lake Lower" ~ "Big Creek Lakes",
+TRUE ~ Waterbody))
 
 
 # Lump subspecies together in the species code
@@ -127,8 +128,23 @@ PFOSData_3 = PFOSData_2 %>%
 
 
 # Replace non-detect values with the MDL
-PFOSData_4 <- PFOSData_3 %>% mutate(MDL = as.character(MDL)) |>
-  mutate(Result = case_when(Qualifier %in% c("U", "BDL") ~ MDL, TRUE ~ (Result)))
+PFOSData_4 <- PFOSData_3 %>%
+  mutate(
+    # Convert MDL to character first if needed for value substitution
+    MDL_clean = as.character(MDL),
+    # Replace non-detect Results with MDL, ensuring numeric conversion
+    Result = case_when(
+      Qualifier %in% c("U", "BDL") ~ as.numeric(MDL_clean),
+      TRUE ~ as.numeric(Result)
+    )
+  ) %>%
+  mutate(
+    Length_mm     = round(as.numeric(Length_mm), 2),
+    Weight_g      = round(as.numeric(Weight_g), 2),
+    Length_Inches = round(as.numeric(Length_Inches), 2),
+    MDL           = round(as.numeric(MDL), 2),
+    Result        = round(Result, 2)
+  )
 
 
 
@@ -148,12 +164,15 @@ colnames(PFOSData_4)
 
 
 # Reconcile different data types in the master vs new dataset
-PFOSData_Master$`Length_mm` <- as.numeric(PFOSData_Master$`Length_mm`)
-PFOSData_Master$`Weight (g)` <- as.numeric(PFOSData_Master$`Weight_g`)
-PFOSData_Master$Length_Inches <- as.numeric(PFOSData_Master$Length_Inches)
-PFOSData_4$Result <- as.numeric(PFOSData_4$Result)
-PFOSData_4$MDL <- as.numeric(PFOSData_4$MDL)
-
+PFOSData_Master <- PFOSData_Master %>%
+  mutate(
+    `Length_mm`   = round(as.numeric(`Length_mm`), 2),
+    `Weight (g)`  = round(as.numeric(`Weight_g`), 2),
+    Length_Inches = round(as.numeric(Length_Inches), 2),
+    Length_mm = round(as.numeric(Length_mm), 2),
+    MDL = round(as.numeric(MDL), 2),
+    Result= round(Result,2)
+  )
 
 # Merge master dataset with new cleaned dataframe
 # Combine dataframes by appending rows
